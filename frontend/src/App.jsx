@@ -1,9 +1,12 @@
-import {RouterProvider} from "react-router";
+import {RouterProvider} from "react-router-dom";
 import {router} from "./app.routes.jsx";
-import register from "./features/auth/pages/Register.jsx"; 
+import {AuthProvider} from "./features/auth/auth.context.jsx";
+
 function App() {
   return (
-   <RouterProvider router={router} />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   )
 }
 
