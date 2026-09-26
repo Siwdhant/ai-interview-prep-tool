@@ -8,4 +8,27 @@ const upload = multer({ dest: 'uploads/' })
 
 reportRouter.post('/generate', authUser, upload.single('resume'), reportController.generateReport)
 
+reportRouter.get(
+    '/:id/pdf',
+    authUser,
+    reportController.downloadReportPdf
+)
+
+
+reportRouter.get(
+    '/:id',
+    authUser,
+    reportController.getReportById
+)
+
+
+
+reportRouter.get(
+    '/',
+    authUser,
+    reportController.getAllReports
+)
+
+
+
 module.exports = reportRouter

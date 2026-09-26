@@ -1,6 +1,8 @@
+const mongoose = require('mongoose')
 const reportModel = require('../models/report.model')
 const { generateInterviewReport } = require('../services/gemini.service')
 const reportValidator = require('../validators/report.validator')
+const { generateReportPdf } = require('../services/pdf.service')
 
 async function generateReport(req, res) {
     try {
@@ -48,4 +50,86 @@ async function generateReport(req, res) {
     }
 }
 
-module.exports = { generateReport }
+async function getReportById(req, res) {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({
+                message: "Invalid report ID"
+            })
+        }
+
+        const report = await reportModel.findOne({
+            _id: req.params.id,
+            user: req.user.id
+        })
+
+        if (!report) {
+            return res.status(404).json({
+                message: "Report not found"
+            })
+        }
+
+        res.status(200).json({
+            report
+        })
+    } catch (err) {
+        console.log(err)
+        res.status(500).json({
+            message: "Something went wrong"
+        })
+    }
+}
+
+async function getAllReports(req, res) {
+    try {
+        const reports = await reportModel
+            .find({ user: req.user.id })
+            .sort({ createdAt: -1 })
+
+        res.status(200).json({
+            reports
+        })
+    } catch (err) {
+        console.log(err)
+        res.status(500).json({
+            message: "Something went wrong"
+        })
+    }
+}
+
+async function downloadReportPdf(req, res) {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({
+                message: "Invalid report ID"
+            })
+        }
+
+        const report = await reportModel.findOne({
+            _id: req.params.id,
+            user: req.user.id
+        })
+
+        if (!report) {
+            return res.status(404).json({
+                message: "Report not found"
+            })
+        }
+
+        const pdfBuffer = await generateReportPdf(report)
+
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="${report.jobRole}-report.pdf"`
+        })
+
+        res.send(pdfBuffer)
+    } catch (err) {
+        console.log(err)
+        res.status(500).json({
+            message: "Something went wrong"
+        })
+    }
+}
+
+module.exports = { generateReport, getReportById, getAllReports, downloadReportPdf }
